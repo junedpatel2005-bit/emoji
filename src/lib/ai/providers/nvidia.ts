@@ -24,7 +24,7 @@ export class NVIDIAProvider implements EmojiAIProvider {
   private model: string;
 
   constructor() {
-    this.apiKey = process.env.NVIDIA_API_KEY || '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';
+    this.apiKey = process.env.NVIDIA_API_KEY || '';
     this.baseUrl = process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1';
     this.model = process.env.NVIDIA_MODEL || 'nvidia/llama-3.1-nemotron-70b-instruct';
 
