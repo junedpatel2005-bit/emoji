@@ -15,7 +15,7 @@ export function jsonError(status: number, code: string, message: string) {
  * never leak stack traces or internal error messages to clients.
  */
 export function withErrorHandling(
-  handler: (request: Request, context: unknown) => Promise<NextResponse>
+  handler: (request: Request, context: unknown) => Promise<Response>
 ) {
   return async (request: Request, context: unknown) => {
     try {

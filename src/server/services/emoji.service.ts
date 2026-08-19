@@ -20,6 +20,11 @@ function dataUrlToBuffer(dataUrl: string): { buffer: Buffer; mimeType: string } 
   return { mimeType: match[1], buffer: Buffer.from(match[2], 'base64') };
 }
 
+function mimeToExt(mimeType: string): string {
+  const subtype = mimeType.split('/')[1] ?? 'png';
+  return subtype.split('+')[0];
+}
+
 async function assertOwnedEmoji(userId: string, id: string) {
   const emoji = await prisma.emoji.findUnique({ where: { id } });
   if (!emoji) throw new NotFoundError('Emoji not found');
@@ -45,7 +50,7 @@ export async function generateAndSaveEmoji(userId: string, input: GenerateEmojiI
   try {
     const result = await generateEmoji(input);
     const { buffer, mimeType } = dataUrlToBuffer(result.imageUrl);
-    const ext = mimeType.split('/')[1] ?? 'png';
+    const ext = mimeToExt(mimeType);
     const upload = await uploadFile(buffer, `emoji.${ext}`, mimeType);
 
     const emoji = await prisma.emoji.create({
@@ -105,7 +110,7 @@ export async function transformAndSaveEmoji(
 
   const result = await transformEmoji({ ...input, imageUrl: original.url });
   const { buffer, mimeType } = dataUrlToBuffer(result.imageUrl);
-  const ext = mimeType.split('/')[1] ?? 'png';
+  const ext = mimeToExt(mimeType);
   const upload = await uploadFile(buffer, `emoji.${ext}`, mimeType);
 
   return prisma.emoji.create({

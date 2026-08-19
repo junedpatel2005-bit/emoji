@@ -11,12 +11,15 @@ import {
 
 export class NVIDIAProvider implements EmojiAIProvider {
   readonly name = 'nvidia';
+  // generateEmoji/transformEmoji always produce an image (falling back to a mock
+  // placeholder when no real image-generation endpoint is configured), so these
+  // stay true; the mock fallback itself is logged via console.warn.
   readonly capabilities: AIProviderCapabilities = {
-    supportsImageGeneration: false,
-    supportsImageEditing: false,
+    supportsImageGeneration: true,
+    supportsImageEditing: true,
     supportsVision: false,
     maxImageSize: 1024,
-    supportedFormats: ['png', 'webp'],
+    supportedFormats: ['png', 'webp', 'svg'],
   };
 
   private apiKey: string;

@@ -83,7 +83,10 @@ export class LocalStorageProvider implements StorageProvider {
   }
 
   getPublicUrl(key: string): string {
-    return `${this.publicPath}/${key}`;
+    // Served via a route handler (not the static /public/ folder) so files
+    // written after the production build are still reachable — see
+    // src/app/api/uploads/[key]/route.ts.
+    return `/api/uploads/${key}`;
   }
 
   async getSignedUrl(key: string, expiresIn = 3600): Promise<string> {
