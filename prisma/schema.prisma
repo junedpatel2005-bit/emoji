@@ -1,0 +1,187 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum EmojiStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum EmojiSourceType {
+  generated
+  uploaded
+  transformed
+}
+
+enum EmojiStyle {
+  emoji
+  emoji_3d
+  sticker
+  cartoon
+  pixel
+  minimal
+  clay
+  glossy
+}
+
+enum EmojiExpression {
+  happy
+  laughing
+  angry
+  sad
+  cool
+  surprised
+  neutral
+  custom
+}
+
+enum EmojiBackground {
+  transparent
+  solid
+  gradient
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  avatarUrl     String?
+  passwordHash  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  emojis        Emoji[]
+  collections   Collection[]
+  generationJobs GenerationJob[]
+  emojiUsages   EmojiUsage[]
+
+  @@map("users")
+}
+
+model Emoji {
+  id                String        @id @default(cuid())
+  userId            String
+  name              String
+  slug              String
+  prompt            String?
+  negativePrompt    String?
+  generationPrompt  String?
+  imageUrl          String
+  thumbnailUrl      String?
+  originalImageUrl  String?
+  mimeType          String        @default("image/png")
+  width             Int
+  height            Int
+  fileSize          Int
+  provider          String?
+  model             String?
+  status            EmojiStatus   @default(completed)
+  sourceType        EmojiSourceType @default(generated)
+  style             EmojiStyle?   @default(emoji)
+  expression        EmojiExpression? @default(neutral)
+  background        EmojiBackground @default(transparent)
+  favorite          Boolean       @default(false)
+  usageCount        Int           @default(0)
+  parentEmojiId     String?
+  metadata          Json?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentEmoji       Emoji?        @relation("EmojiVariations", fields: [parentEmojiId], references: [id], onDelete: SetNull)
+  variations        Emoji[]       @relation("EmojiVariations")
+  collections       CollectionEmoji[]
+  generationJobs    GenerationJob[]
+  usages            EmojiUsage[]
+
+  @@unique([userId, slug])
+  @@index([userId])
+  @@index([userId, favorite])
+  @@index([userId, sourceType])
+  @@index([parentEmojiId])
+  @@map("emojis")
+}
+
+model Collection {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emojis      CollectionEmoji[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("collections")
+}
+
+model CollectionEmoji {
+  id            String     @id @default(cuid())
+  collectionId  String
+  emojiId       String
+  order         Int        @default(0)
+  createdAt     DateTime   @default(now())
+
+  collection    Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  emoji         Emoji      @relation(fields: [emojiId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, emojiId])
+  @@index([collectionId])
+  @@index([emojiId])
+  @@map("collection_emojis")
+}
+
+model GenerationJob {
+  id          String      @id @default(cuid())
+  userId      String
+  emojiId     String?
+  provider    String
+  model       String
+  prompt      String
+  input       Json?
+  output      Json?
+  status      EmojiStatus @default(pending)
+  error       String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime    @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji       Emoji?      @relation(fields: [emojiId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([emojiId])
+  @@index([status])
+  @@map("generation_jobs")
+}
+
+model EmojiUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  emojiId   String
+  action    String   // "copy", "download", "view", "favorite", "share"
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji     Emoji    @relation(fields: [emojiId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([emojiId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("emoji_usages")
+}
